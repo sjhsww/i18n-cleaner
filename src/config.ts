@@ -2,6 +2,7 @@
 
 import chalk from 'chalk';
 import { cosmiconfig } from 'cosmiconfig';
+import type { Config } from './types';
 
 
 export const defaultConfig: Config = {
