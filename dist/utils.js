@@ -59,5 +59,5 @@ function writeFileContent(filePath, content) {
 function replaceI18n(content) {
     // 正则匹配 t("...") 或 t('...')
     const regex = /t\((['"])(.*?)\1\)/g;
-    return content.replace(regex, (_, __, text) => text);
+    return content.replace(regex, (_, quote, text) => `${quote}${text}${quote}`);
 }
