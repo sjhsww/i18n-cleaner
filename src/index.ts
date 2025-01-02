@@ -3,37 +3,75 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
 import glob from 'glob';
-import { readFileContent, writeFileContent, replaceI18n } from './utils';
-import { Config, defaultConfig } from './config';
+import { readFileContent, writeFileContent, replaceI18n, removeLines } from './utils';
+import { Config, defaultConfig, loadConfig } from './config';
 
-// 创建 CLI 程序
 const program = new Command();
 
-// 定义 CLI 选项
 program
     .version('1.0.0')
     .description('i18nCleaner - 一个国际化清理工具')
     .option('-c, --config <path>', '配置文件路径')
     .option('-i, --include <patterns...>', '包含的目录或文件模式')
+    .option('-e, --exclude <patterns...>', '排除的目录或文件模式')
+    .option('-r, --replacePattern <pattern>', '要替换的函数名称，默认是 t')
+    .option('-b, --backup', '是否在修改文件前备份原文件')
     .parse(process.argv);
 
-// 获取 CLI 选项
 const options = program.opts();
 
-// 合并配置
-const config: Config = { ...defaultConfig };
+/**
+ * 合并配置文件和命令行选项
+ */
+async function getConfig(): Promise<Config> {
+    let config: Config = { ...defaultConfig };
 
-if (options.include) {
-    config.include = options.include;
+    // 如果指定了配置文件，加载并合并
+    if (options.config) {
+        try {
+            const fileConfig = await loadConfig(options.config);
+            config = { ...config, ...fileConfig };
+            console.log(chalk.green(`已加载配置文件: ${options.config}`));
+        } catch (error:any) {
+            console.error(chalk.red(error.message));
+            process.exit(1);
+        }
+    }
+
+    // 合并命令行选项（命令行选项优先级高于配置文件）
+    if (options.include) {
+        config.include = options.include;
+    }
+
+    if (options.exclude) {
+        config.exclude = config.exclude ? config.exclude.concat(options.exclude) : options.exclude;
+    }
+
+    if (options.replacePattern) {
+        // 如果命令行只提供一个替换模式，可以将其添加到 replacePatterns
+        config.replacePatterns = config.replacePatterns || [];
+        config.replacePatterns.push({
+            pattern: options.replacePattern,
+            replacement: `"${options.replacePattern}"` // 默认替换为字符串
+        });
+    }
+
+    if (options.backup !== undefined) {
+        config.backup = options.backup;
+    }
+
+    return config;
 }
 
 // 主函数
 async function main() {
     try {
+        const config = await getConfig();
+
         // 收集所有匹配的文件
         let files: string[] = [];
         for (const pattern of config.include) {
-            const matchedFiles = glob.sync(pattern, { nodir: true });
+            const matchedFiles = glob.sync(pattern, { nodir: true, ignore: config.exclude });
             files = files.concat(matchedFiles);
         }
 
@@ -52,9 +90,30 @@ async function main() {
                 console.log(chalk.blue(`正在处理文件: ${file}`));
 
                 const content = await readFileContent(file);
-                const newContent = replaceI18n(content);
+
+                // 先删除导入语句
+                let newContent = config.removeImports && config.removeImports.length > 0
+                    ? removeLines(content, config.removeImports)
+                    : content;
+
+                // 删除变量声明
+                if (config.removeDeclarations && config.removeDeclarations.length > 0) {
+                    newContent = removeLines(newContent, config.removeDeclarations);
+                }
+
+                // 进行替换
+                if (config.replacePatterns && config.replacePatterns.length > 0) {
+                    newContent = replaceI18n(newContent, config.replacePatterns);
+                }
 
                 if (newContent !== content) {
+                    if (config.backup) {
+                        // 创建备份文件
+                        const backupPath = `${file}.bak`;
+                        await writeFileContent(backupPath, content);
+                        console.log(chalk.gray(`已备份原文件: ${backupPath}`));
+                    }
+
                     await writeFileContent(file, newContent);
                     console.log(chalk.green(`已更新文件: ${file}`));
                 } else {
@@ -64,14 +123,14 @@ async function main() {
                 processedFiles++;
                 const progress = ((processedFiles / totalFiles) * 100).toFixed(2);
                 console.log(chalk.magenta(`进度: ${processedFiles}/${totalFiles} (${progress}%)\n`));
-            } catch (fileError:any) {
-                console.error(chalk.red(`处理文件失败: ${file} - ${fileError.message}`));
+            } catch (fileError) {
+                console.error(chalk.red(`处理文件失败: ${file} - ${(fileError as Error).message}`));
             }
         }
 
         console.log(chalk.green('所有文件处理完成。'));
-    } catch (error:any) {
-        console.error(chalk.red(`发生错误: ${error.message}`));
+    } catch (error) {
+        console.error(chalk.red(`发生错误: ${(error as Error).message}`));
         process.exit(1);
     }
 }
