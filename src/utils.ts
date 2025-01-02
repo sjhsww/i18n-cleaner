@@ -49,15 +49,16 @@ export function replaceI18n(content: string, patterns: ReplacePattern[]): string
     let newContent = content;
 
     patterns.forEach(({ pattern, replacement }) => {
-        // 使用单词边界 \b 确保只匹配完整的函数名称
+        // 修改正则表达式以正确捕获引号和文本
         const regex = new RegExp(`\\b${pattern}\\((['"])(.*?)\\1\\)`, 'g');
 
-        // 使用 replace 方法进行替换
-        newContent = newContent.replace(regex, (_, quote, text) => {
-            // 使用替换模板中的占位符进行替换
-            return replacement
-                .replace('${quote}', quote)
-                .replace('${text}', text);
+        // 修改替换逻辑
+        newContent = newContent.replace(regex, (match, quote, text) => {
+            // 先创建替换字符串，然后再进行变量替换
+            let result = replacement;
+            result = result.replace(/\${quote}/g, quote);
+            result = result.replace(/\${text}/g, text);
+            return result;
         });
     });
 
