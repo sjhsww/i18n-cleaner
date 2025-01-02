@@ -3,19 +3,6 @@
 import chalk from 'chalk';
 import { cosmiconfig } from 'cosmiconfig';
 
-export interface ReplacePattern {
-    pattern: string; // 要替换的函数名称，如 t
-    replacement: string; // 替换的内容，如 "${text}"
-}
-
-export interface Config {
-    include: string[]; // 要包含的目录或文件模式
-    exclude?: string[]; // 要排除的目录或文件模式
-    replacePatterns?: ReplacePattern[]; // 替换规则
-    removeImports?: string[]; // 要删除的导入语句
-    removeDeclarations?: string[]; // 要删除的变量声明
-    backup?: boolean; // 是否备份原文件
-}
 
 export const defaultConfig: Config = {
     include: ["src/**/*.{js,ts,jsx,tsx}"], // 默认包含 src 目录下的所有 JS/TS 文件
@@ -23,9 +10,10 @@ export const defaultConfig: Config = {
     replacePatterns: [
         {
             pattern: "t",
-            replacement: "\"${text}\""
+            replacement: '${quote}${text}${quote}'  // 保留原有的引号
         }
     ],
+    removeImports: ["import { useTranslation } from 'react-i18next';", `import { useTranslation } from 'react-i18next';`],
     removeDeclarations: ["const { t } = useTranslation();"],
     backup: false, // 默认不备份
 };

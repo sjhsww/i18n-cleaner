@@ -2,7 +2,7 @@
 
 import fs from 'fs-extra';
 import chalk from 'chalk';
-import { ReplacePattern } from './config';
+import { ReplacePattern } from './types';
 
 /**
  * 读取并解析文件内容
@@ -39,15 +39,31 @@ export async function writeFileContent(filePath: string, content: string): Promi
  * @param patterns 替换规则数组
  * @returns 替换后的内容
  */
+/**
+ * 替换指定函数调用为指定的内容
+ * @param content 文件内容
+ * @param patterns 替换规则数组
+ * @returns 替换后的内容
+ */
 export function replaceI18n(content: string, patterns: ReplacePattern[]): string {
     let newContent = content;
+
     patterns.forEach(({ pattern, replacement }) => {
-        // 构建动态的正则表达式，例如匹配 t("...") 或 t('...')
-        const regex = new RegExp(`${pattern}\\((['"])(.*?)\\1\\)`, 'g');
-        newContent = newContent.replace(regex, (_, __, text) => replacement.replace('${text}', text));
+        // 使用单词边界 \b 确保只匹配完整的函数名称
+        const regex = new RegExp(`\\b${pattern}\\((['"])(.*?)\\1\\)`, 'g');
+
+        // 使用 replace 方法进行替换
+        newContent = newContent.replace(regex, (_, quote, text) => {
+            // 使用替换模板中的占位符进行替换
+            return replacement
+                .replace('${quote}', quote)
+                .replace('${text}', text);
+        });
     });
+
     return newContent;
 }
+
 
 /**
  * 删除指定的行

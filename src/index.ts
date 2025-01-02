@@ -4,7 +4,8 @@ import { Command } from 'commander';
 import chalk from 'chalk';
 import  * as glob from 'glob';
 import { readFileContent, writeFileContent, replaceI18n, removeLines } from './utils';
-import { Config, defaultConfig, loadConfig } from './config';
+import {  defaultConfig, loadConfig } from './config';
+import type { Config } from './types';
 import pkg from '../package.json';
 
 const program = new Command();

@@ -6,6 +6,8 @@
 - 删除特定的导入语句（例如：`import { useTranslation } from 'react-i18next';`）。
 - 删除特定的变量声明（例如：`const { t } = useTranslation();`）。
 
+支持配置文件，配置文件支持 `package.json`、`i18n-cleaner.config.ts`、`i18n-cleaner.config.js`、`i18n-cleaner.config.json`、`i18n-cleaner.config.yaml`、`i18n-cleaner.config.yml` 文件。
+
 ## 安装
 
 通过 npm 全局安装：
