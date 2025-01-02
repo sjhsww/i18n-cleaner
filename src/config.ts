@@ -26,7 +26,6 @@ export const defaultConfig: Config = {
             replacement: "\"${text}\""
         }
     ],
-    removeImports: ["import { useTranslation } from 'react-i18next';"],
     removeDeclarations: ["const { t } = useTranslation();"],
     backup: false, // 默认不备份
 };

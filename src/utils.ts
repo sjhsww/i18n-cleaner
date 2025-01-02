@@ -56,7 +56,7 @@ export function replaceI18n(content: string, patterns: ReplacePattern[]): string
  * @returns 删除后的内容
  */
 export function removeLines(content: string, linesToRemove: string[]): string {
-    const lines = content.split('\n');
+    const lines = content.split('\n') || [];
     const filteredLines = lines.filter(line => {
         return !linesToRemove.some(pattern => {
             const regex = new RegExp(pattern);

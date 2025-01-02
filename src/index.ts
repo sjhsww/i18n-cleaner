@@ -2,14 +2,15 @@
 
 import { Command } from 'commander';
 import chalk from 'chalk';
-import glob from 'glob';
+import  * as glob from 'glob';
 import { readFileContent, writeFileContent, replaceI18n, removeLines } from './utils';
 import { Config, defaultConfig, loadConfig } from './config';
+import pkg from '../package.json';
 
 const program = new Command();
 
 program
-    .version('1.0.0')
+    .version(pkg.version)
     .description('i18nCleaner - 一个国际化清理工具')
     .option('-c, --config <path>', '配置文件路径')
     .option('-i, --include <patterns...>', '包含的目录或文件模式')
@@ -25,7 +26,6 @@ const options = program.opts();
  */
 async function getConfig(): Promise<Config> {
     let config: Config = { ...defaultConfig };
-
     // 如果指定了配置文件，加载并合并
     if (options.config) {
         try {
@@ -67,7 +67,6 @@ async function getConfig(): Promise<Config> {
 async function main() {
     try {
         const config = await getConfig();
-
         // 收集所有匹配的文件
         let files: string[] = [];
         for (const pattern of config.include) {
