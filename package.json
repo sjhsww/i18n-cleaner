@@ -1,6 +1,6 @@
 {
   "name": "i18n-cleaner-tool",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "i18nCleaner - 一个国际化清理工具",
   "main": "dist/index.js",
   "bin": {
